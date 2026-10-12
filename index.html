@@ -861,7 +861,33 @@ if(newsForm) newsForm.addEventListener('submit',(e)=>{
     fetch(ENDPOINT,{method:'POST',mode:'no-cors',body:data}).catch(()=>{});
   }
   newsForm.closest('.news-card').classList.add('done');
+  track('lead');
 });
+
+// conversion tracking — GA4 / Meta / Kakao
+function track(kind,name){
+  try{
+    if(kind==='buy'){
+      if(window.gtag) gtag('event','buy_click',{item_name:name,transport_type:'beacon'});
+      if(window.fbq) fbq('track','InitiateCheckout',{content_name:name,content_category:'수채화다이어리'});
+      if(window.kakaoPixel) kakaoPixel('768058452707658936').viewContent({tag:name});
+    }else if(kind==='store'){
+      if(window.gtag) gtag('event','store_click',{transport_type:'beacon'});
+      if(window.fbq) fbq('track','ViewContent',{content_name:'스마트스토어'});
+    }else if(kind==='lead'){
+      if(window.gtag) gtag('event','generate_lead',{method:'newsletter'});
+      if(window.fbq) fbq('track','Lead',{content_name:'뉴스레터'});
+      if(window.kakaoPixel) kakaoPixel('768058452707658936').completeRegistration('뉴스레터');
+    }
+  }catch(_){}
+}
+document.querySelectorAll('a[data-buy],a[data-store]').forEach(a=>a.addEventListener('click',e=>{
+  if(a.dataset.buy) track('buy',a.dataset.buy); else track('store');
+  // 같은 탭 이동이면 픽셀 전송 시간을 잠깐 확보 (새 탭/수정키 클릭은 그대로)
+  if(a.target==='_blank'||e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0) return;
+  e.preventDefault();
+  setTimeout(()=>{location.href=a.href;},250);
+}));
 </script>
 </body>
 </html>
